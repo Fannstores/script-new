@@ -868,17 +868,17 @@ print_success "Fail2ban"
 function ins_epro(){
 clear
 print_install "Menginstall ePro WebSocket Proxy"
-wget -O /usr/bin/ws "${REPO}Fls/ws" >/dev/null 2>&1
-wget -O /usr/bin/tun.conf "${REPO}Cfg/tun.conf" >/dev/null 2>&1
-wget -O /etc/systemd/system/ws.service "${REPO}Fls/ws.service" >/dev/null 2>&1
-chmod +x /etc/systemd/system/ws.service
-chmod +x /usr/bin/ws
-chmod 644 /usr/bin/tun.conf
-systemctl disable ws
-systemctl stop ws
-systemctl enable ws
-systemctl start ws
-systemctl restart ws
+wget -O /usr/bin/install-ws.sh "https://raw.githubusercontent.com/givps/AutoScriptXray/master/ws/install-ws.sh" >/dev/null 2>&1
+wget -O /usr/bin/proxy.js "https://raw.githubusercontent.com/givps/AutoScriptXray/master/ws/proxy.js" >/dev/null 2>&1
+wget -O /etc/systemd/system/ws-proxy.service "https://raw.githubusercontent.com/givps/AutoScriptXray/master/ws/ws-proxy.service" >/dev/null 2>&1
+chmod +x /etc/systemd/system/ws-proxy.service
+chmod +x /usr/bin/install-ws.sh
+chmod 644 /usr/bin/proxy.js
+systemctl disable install-ws.sh
+systemctl stop install-ws.sh
+systemctl enable install-ws.sh
+systemctl start install-ws.sh
+systemctl restart install-ws.sh
 wget -q -O /usr/local/share/xray/geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" >/dev/null 2>&1
 wget -q -O /usr/local/share/xray/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" >/dev/null 2>&1
 wget -O /usr/sbin/ftvpn "${REPO}Fls/ftvpn" >/dev/null 2>&1
