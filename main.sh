@@ -138,6 +138,39 @@ if [ "${EUID}" -ne 0 ]; then
 echo "You need to run this script as root"
 exit 1
 fi
+# -------------------------------
+# 1️⃣ Set timezone ke Asia/Jakarta
+# -------------------------------
+echo "Setting timezone to Asia/Jakarta..."
+timedatectl set-timezone Asia/Jakarta
+echo "Timezone set:"
+timedatectl | grep "Time zone"
+
+# -------------------------------
+# 2️⃣ Enable NTP (auto-sync waktu)
+# -------------------------------
+echo "Enabling NTP..."
+timedatectl set-ntp true
+
+# Cek status sinkronisasi
+timedatectl status | grep -E "NTP enabled|NTP synchronized"
+
+# -------------------------------
+# 3️⃣ Install & enable cron
+# -------------------------------
+if ! systemctl list-unit-files | grep -q '^cron.service'; then
+    echo "Cron not found. Installing cron..."
+    apt update -y
+    apt install -y cron
+fi
+
+echo "Enabling and starting cron service..."
+systemctl enable cron
+systemctl restart cron
+
+echo ""
+echo "✅ VPS timezone, NTP, and cron setup complete!"
+
 if [ "$(systemd-detect-virt)" == "openvz" ]; then
 echo "OpenVZ is not supported"
 exit 1
@@ -988,7 +1021,41 @@ cat >/etc/rc.local <<EOF
 #!/bin/bash
 iptables -I INPUT -p udp --dport 5300 -j ACCEPT
 iptables -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 5300
-systemctl restart netfilter-persistent
+# Flush
+iptables -F f2b-sshd
+iptables -L INPUT -n --line-numbers
+# Allow loopback
+iptables -I INPUT -i lo -j ACCEPT
+# Allow established connections
+iptables -I INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+# SSH ports
+iptables -C INPUT -p tcp --dport 22 -j ACCEPT 2>/dev/null || \
+iptables -I INPUT -p tcp --dport 22 -j ACCEPT
+iptables -C INPUT -p tcp --dport 2222 -j ACCEPT 2>/dev/null || \
+iptables -I INPUT -p tcp --dport 2222 -j ACCEPT
+# HTTP/HTTPS
+iptables -C INPUT -p tcp --dport 80 -j ACCEPT 2>/dev/null || \
+iptables -I INPUT -p tcp --dport 80 -j ACCEPT
+iptables -C INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null || \
+iptables -I INPUT -p tcp --dport 443 -j ACCEPT
+# HAProxy ports
+iptables -C INPUT -p tcp --dport 1443 -j ACCEPT 2>/dev/null || \
+iptables -I INPUT -p tcp --dport 1443 -j ACCEPT
+iptables -C INPUT -p tcp --dport 1444 -j ACCEPT 2>/dev/null || \
+iptables -I INPUT -p tcp --dport 1444 -j ACCEPT
+iptables -C INPUT -p tcp --dport 1445 -j ACCEPT 2>/dev/null || \
+iptables -I INPUT -p tcp --dport 1445 -j ACCEPT
+iptables -C INPUT -p tcp --dport 1446 -j ACCEPT 2>/dev/null || \
+iptables -I INPUT -p tcp --dport 1446 -j ACCEPT
+iptables -C INPUT -p tcp --dport 1936 -j ACCEPT 2>/dev/null || \
+iptables -I INPUT -p tcp --dport 1936 -j ACCEPT
+# Save rules
+netfilter-persistent save
+# chattr +i /etc/iptables/rules.v4
+netfilter-persistent reload
+
+systemctl enable netfilter-persistent
+systemctl start netfilter-persistent
 exit 0
 EOF
 chmod +x /etc/rc.local
