@@ -683,6 +683,151 @@ debconf-set-selections <<<"keyboard-configuration keyboard-configuration/variant
 debconf-set-selections <<<"keyboard-configuration keyboard-configuration/variant select English"
 debconf-set-selections <<<"keyboard-configuration keyboard-configuration/xkb-keymap select "
 cd
+# ==============================================
+# SSLH Multi-port Installer (non-root, safe ports)
+# ==============================================
+# Update system & install dependencies
+apt update -y
+apt install -y sslh wget build-essential libconfig-dev iproute2
+
+# Buat user/group sslh jika belum ada
+getent group sslh >/dev/null || groupadd -r sslh
+id -u sslh >/dev/null 2>&1 || useradd -r -g sslh -s /usr/sbin/nologin -d /nonexistent sslh
+
+# Set capability untuk bind port 80/443
+getcap /usr/sbin/sslh | grep -q cap_net_bind_service || setcap 'cap_net_bind_service=+ep' /usr/sbin/sslh
+
+# Buat folder run sslh
+mkdir -p /run/sslh && chown sslh:sslh /run/sslh
+
+# Buat systemd service type = simple/forking
+cat > /etc/systemd/system/sslh.service <<'EOF'
+[Unit]
+Description=SSL/SSH/OpenVPN/XMPP/tinc port multiplexer
+After=network.target
+
+[Service]
+ExecStart=/usr/sbin/sslh \
+  --listen 0.0.0.0:443 \
+  --listen 0.0.0.0:80 \
+  --ssh 127.0.0.1:22 \
+  --openvpn 127.0.0.1:1196 \
+  --tls 127.0.0.1:4433 \
+  --http 127.0.0.1:8080 \
+  --pidfile /run/sslh/sslh.pid \
+  --foreground
+User=sslh
+Group=sslh
+Restart=on-failure
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload systemd dan start service
+systemctl daemon-reload
+systemctl enable sslh
+systemctl restart sslh
+
+# install stunnel
+apt install -y stunnel4
+
+cat > /etc/stunnel/stunnel.conf <<EOF
+pid = /var/run/stunnel.pid
+cert = /etc/stunnel/stunnel.pem
+client = no
+socket = a:SO_REUSEADDR=1
+socket = l:TCP_NODELAY=1
+socket = r:TCP_NODELAY=1
+
+# =====================================
+# ssh openssh
+# =====================================
+[ssh-ssl]
+accept = 222
+connect = 127.0.0.1:22
+
+# =====================================
+# ssh dropbear
+# =====================================
+[dropbear-ssl]
+accept = 333
+connect = 127.0.0.1:110
+
+# =====================================
+# wss
+# =====================================
+[wss-ssl]
+accept = 444
+connect = 127.0.0.1:1444
+
+# =====================================
+# tor
+# =====================================
+[tor-ssl]
+accept = 0.0.0.0:777
+connect = 127.0.0.1:2222
+
+# =====================================
+# openvpn
+# =====================================
+[openvpn-ssl]
+accept = 8443
+connect = 127.0.0.1:1196
+EOF
+
+# make a certificate
+openssl genrsa -out key.pem 2048
+openssl req -new -x509 -key key.pem -out cert.pem -days 3650 \
+-subj "/C=ID/ST=Jakarta/L=Jakarta/O=givps/OU=IT/CN=localhost/emailAddress=admin@localhost"
+cat key.pem cert.pem > /etc/stunnel/stunnel.pem
+chmod 600 /etc/stunnel/stunnel.pem
+
+cat > /etc/default/stunnel4 <<EOF
+ENABLED=1
+FILES="/etc/stunnel/*.conf"
+OPTIONS=""
+PPP_RESTART=0
+EOF
+
+systemctl daemon-reload
+systemctl enable stunnel4
+systemctl start stunnel4
+
+# install tor
+apt install -y tor
+
+cat > /etc/tor/torrc <<'EOF'
+Log notice file /var/log/tor/notices.log
+SOCKSPort 127.0.0.1:9050
+TransPort 127.0.0.1:9040
+DNSPort 127.0.0.1:5353
+AvoidDiskWrites 1
+RunAsDaemon 1
+ControlPort 9051
+CookieAuthentication 1
+EOF
+
+# disable auto start after reboot
+systemctl disable tor
+systemctl stop tor
+# enable auto start after reboot
+#systemctl restart tor
+#systemctl enable tor
+
+#iptables -t nat -L TOR &>/dev/null || iptables -t nat -N TOR
+#TOR_UID=$(id -u debian-tor 2>/dev/null || echo 0)
+#iptables -t nat -C TOR -m owner --uid-owner $TOR_UID -j RETURN 2>/dev/null || \
+#iptables -t nat -A TOR -m owner --uid-owner $TOR_UID -j RETURN
+#iptables -t nat -C TOR -d 127.0.0.0/8 -j RETURN 2>/dev/null || \
+#iptables -t nat -A TOR -d 127.0.0.0/8 -j RETURN
+#iptables -t nat -C TOR -p udp --dport 53 -j REDIRECT --to-ports 5353 2>/dev/null || \
+#iptables -t nat -A TOR -p udp --dport 53 -j REDIRECT --to-ports 5353
+#iptables -t nat -C TOR -p tcp -j REDIRECT --to-ports 9040 2>/dev/null || \
+#iptables -t nat -A TOR -p tcp -j REDIRECT --to-ports 9040
+#iptables -t nat -C OUTPUT -p tcp -j TOR 2>/dev/null || \
+#iptables -t nat -I OUTPUT -p tcp -j TOR
 cat > /etc/systemd/system/rc-local.service <<-END
 [Unit]
 Description=/etc/rc.local
