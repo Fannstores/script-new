@@ -491,8 +491,28 @@ sudo apt-get remove --purge ufw firewalld -y
 sudo apt-get install -y --no-install-recommends software-properties-common
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
-sudo apt-get install -y speedtest-cli vnstat libnss3-dev liblzo2-dev libnspr4-dev pkg-config libpam0g-dev libcap-ng-dev libcap-ng-utils libselinux1-dev flex bison make libnss3-tools libevent-dev bc rsyslog dos2unix zlib1g-dev libssl-dev libsqlite3-dev sed dirmngr libxml-parser-perl build-essential gcc g++ htop lsof tar wget curl ruby zip unzip p7zip-full libc6 util-linux ca-certificates iptables iptables-persistent netfilter-persistent net-tools openssl gnupg gnupg2 lsb-release shc cmake git whois screen socat xz-utils apt-transport-https gnupg1 dnsutils cron bash-completion ntpdate chrony jq tmux python3 python3-pip lsb-release gawk libncursesw5-dev libgdbm-dev tk-dev libffi-dev libbz2-dev checkinstall openvpn easy-rsa dropbear
-	print_success "Packet Yang Dibutuhkan"
+# Remove unused or conflicting firewall/mail services
+systemctl stop ufw 2>/dev/null
+systemctl disable ufw 2>/dev/null
+apt-get remove --purge -y ufw firewalld exim4
+# Install base system tools and network utilities
+apt install -y \
+  shc wget curl figlet ruby python3 make cmake \
+  iptables iptables-persistent netfilter-persistent \
+  coreutils rsyslog net-tools htop screen \
+  zip unzip nano sed gnupg bc jq bzip2 gzip \
+  apt-transport-https build-essential dirmngr \
+  libxml-parser-perl neofetch git lsof iftop \
+  libsqlite3-dev libz-dev gcc g++ libreadline-dev \
+  zlib1g-dev libssl-dev dos2unix
+
+# Install Ruby gem (colorized text)
+gem install lolcat
+
+# Enable and start logging service
+systemctl enable rsyslog
+systemctl start rsyslog
+print_success "Packet Yang Dibutuhkan"
     
 }
 clear
