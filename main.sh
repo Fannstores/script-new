@@ -1007,7 +1007,77 @@ function ins_Fail2ban(){
 clear
 print_install "Menginstall Fail2ban"
 clear
-wget -q ${REPO}Fls/setrsyslog.sh && chmod +x setrsyslog.sh && ./setrsyslog.sh
+apt -y install fail2ban
+
+cat > /etc/fail2ban/jail.local << 'EOF'
+[DEFAULT]
+bantime = 3600
+findtime = 600
+maxretry = 3
+banaction = iptables-multiport
+backend = auto
+
+[sshd]
+enabled  = true
+port     = 22,2222,109,110
+filter   = sshd
+backend = systemd
+maxretry = 3
+findtime = 600
+bantime  = 3600
+
+[sshd-ddos]
+enabled  = true
+port = 22,2222,109,110
+filter = sshd
+backend = systemd
+maxretry = 5
+findtime = 300
+bantime = 604800
+
+[openvpn-tcp]
+enabled  = true
+port     = 1195
+filter   = openvpn
+logpath  = /var/log/openvpn/server-tcp.log
+maxretry = 5
+bantime  = 86400
+
+[openvpn-udp]
+enabled  = true
+port     = 51825
+filter   = openvpn
+logpath  = /var/log/openvpn/server-udp.log
+maxretry = 5
+bantime  = 86400
+
+[openvpn-ssl]
+enabled  = true
+port     = 443
+filter   = openvpn
+logpath  = /var/log/openvpn/server-ssl.log
+maxretry = 5
+bantime  = 86400
+
+[recidive]
+enabled = true
+filter = recidive
+logpath = /var/log/fail2ban.log
+action = iptables-allports[name=recidive, protocol=all]
+bantime = 1209600
+findtime = 86400
+maxretry = 5
+EOF
+
+systemctl daemon-reload
+systemctl enable fail2ban
+systemctl start fail2ban
+
+# Instal DDOS Deflate
+wget -qO- https://raw.githubusercontent.com/givps/AutoScriptXray/master/ssh/auto-install-ddos.sh | bash
+
+# install blokir torrent
+wget -qO- https://raw.githubusercontent.com/givps/AutoScriptXray/master/ssh/auto-torrent-blocker.sh | bash
 print_success "Fail2ban"
 }
 function ins_epro(){
