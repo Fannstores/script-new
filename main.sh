@@ -1275,7 +1275,9 @@ fi
 mesg n || true
 welcome
 EOF
-
+# Install speedtest (using modern method)
+curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash
+apt-get install -y speedtest || true
 cat >/etc/cron.d/daily_backup <<-END
 		0 23 * * * root /usr/local/bin/daily_backup
 	END
