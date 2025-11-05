@@ -29,14 +29,128 @@ Port 2223
 #LogLevel INFO
 
 # Authentication:
-
-#LoginGraceTime 2m
 PermitRootLogin yes
-#StrictModes yes
-#MaxAuthTries 6
-#MaxSessions 10
+PasswordAuthentication yes
+PermitEmptyPasswords no
+PubkeyAuthentication yes
 
-#PubkeyAuthentication yes
+# Connection Settings
+AllowTcpForwarding yes
+PermitTTY yes
+X11Forwarding no
+TCPKeepAlive yes
+ClientAliveInterval 300
+ClientAliveCountMax 2
+MaxAuthTries 3
+MaxSessions 10
+MaxStartups 10:30:100
+
+# Security & Performance
+UsePAM yes
+ChallengeResponseAuthentication no
+UseDNS no
+Compression delayed
+GSSAPIAuthentication no
+
+# Logging
+SyslogFacility AUTH
+LogLevel INFO
+EOF
+
+# ==============================================
+# SSLH Multi-port Installer (non-root, safe ports)
+# ==============================================
+# Update system & install dependencies
+apt update -y
+apt install -y sslh wget build-essential libconfig-dev iproute2
+
+# Buat user/group sslh jika belum ada
+getent group sslh >/dev/null || groupadd -r sslh
+id -u sslh >/dev/null 2>&1 || useradd -r -g sslh -s /usr/sbin/nologin -d /nonexistent sslh
+
+# Set capability untuk bind port 80/443
+getcap /usr/sbin/sslh | grep -q cap_net_bind_service || setcap 'cap_net_bind_service=+ep' /usr/sbin/sslh
+
+# Buat folder run sslh
+mkdir -p /run/sslh && chown sslh:sslh /run/sslh
+
+# Buat systemd service type = simple/forking
+cat > /etc/systemd/system/sslh.service <<'EOF'
+[Unit]
+Description=SSL/SSH/OpenVPN/XMPP/tinc port multiplexer
+After=network.target
+
+[Service]
+ExecStart=/usr/sbin/sslh \
+  --listen 0.0.0.0:443 \
+  --listen 0.0.0.0:80 \
+  --ssh 127.0.0.1:22 \
+  --openvpn 127.0.0.1:1196 \
+  --tls 127.0.0.1:4433 \
+  --http 127.0.0.1:8080 \
+  --pidfile /run/sslh/sslh.pid \
+  --foreground
+User=sslh
+Group=sslh
+Restart=on-failure
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload systemd dan start service
+systemctl daemon-reload
+systemctl enable sslh
+systemctl restart sslh
+
+# install stunnel
+apt install -y stunnel4
+
+cat > /etc/stunnel/stunnel.conf <<EOF
+pid = /var/run/stunnel.pid
+cert = /etc/stunnel/stunnel.pem
+client = no
+socket = a:SO_REUSEADDR=1
+socket = l:TCP_NODELAY=1
+socket = r:TCP_NODELAY=1
+
+# =====================================
+# ssh openssh
+# =====================================
+[ssh-ssl]
+accept = 222
+connect = 127.0.0.1:22
+
+# =====================================
+# ssh dropbear
+# =====================================
+[dropbear-ssl]
+accept = 333
+connect = 127.0.0.1:110
+
+# =====================================
+# wss
+# =====================================
+[wss-ssl]
+accept = 444
+connect = 127.0.0.1:1444
+
+# =====================================
+# tor
+# =====================================
+[tor-ssl]
+accept = 0.0.0.0:777
+connect = 127.0.0.1:2222
+
+# =====================================
+# openvpn
+# =====================================
+[openvpn-ssl]
+accept = 8443
+connect = 127.0.0.1:1196
+EOF
+
 
 # Expect .ssh/authorized_keys2 to be disregarded by default in future.
 #AuthorizedKeysFile	.ssh/authorized_keys .ssh/authorized_keys2
