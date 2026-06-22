@@ -1,6 +1,6 @@
 [Unit]
-Description=WebSocket
-Documentation=https://github.com/Fannstores
+Description=FTS-Tunnel WebSocket
+Documentation=https://github.com/fantunelstore/fts-tunnel
 After=syslog.target network-online.target
 
 [Service]
@@ -11,6 +11,7 @@ Restart=on-failure
 RestartPreventExitStatus=23
 LimitNPROC=10000
 LimitNOFILE=1000000
+MemoryMax=100M
 
 [Install]
 WantedBy=multi-user.target
