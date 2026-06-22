@@ -71,13 +71,13 @@ echo -e "\e[96m━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 sleep 1
 
-LICENSE_REPO="https://raw.githubusercontent.com/Fannstores/script-new/main/license.txt"
+IZIN_REPO="https://raw.githubusercontent.com/Fannstores/izin/main/ip"
 echo -e "${YELLOW}Checking license for IP: $IP ...${NC}"
 
-# Download license.txt
-LICENSE_DATA=$(curl -s "$LICENSE_REPO" 2>/dev/null | grep -v "^#" | grep -v "^$")
+# Download izin/ip
+IZIN_DATA=$(curl -s "$IZIN_REPO" 2>/dev/null)
 
-if [[ -z "$LICENSE_DATA" ]]; then
+if [[ -z "$IZIN_DATA" ]]; then
 echo -e "${RED}[ERROR]${FONT} Cannot fetch license data from repository!"
 echo -e "${RED}[ERROR]${FONT} Please check your internet connection."
 echo ""
@@ -86,15 +86,8 @@ exit 1
 fi
 
 # Cari baris yang BOUND_IP = IP VPS
-MATCH_LINE=$(echo "$LICENSE_DATA" | grep "|${IP}|" 2>/dev/null | head -1)
+MATCH_LINE=$(echo "$IZIN_DATA" | grep "$IP" 2>/dev/null | head -1)
 
-# Jika tidak ketemu, cari yang floating (BOUND_IP = 0.0.0.0)
-if [[ -z "$MATCH_LINE" ]]; then
-MATCH_LINE=$(echo "$LICENSE_DATA" | grep "|0.0.0.0|" 2>/dev/null | head -1)
-FLOATING_MODE=true
-else
-FLOATING_MODE=false
-fi
 
 if [[ -z "$MATCH_LINE" ]]; then
 echo -e "${RED}[ERROR]${FONT} No license found for IP: $IP"
@@ -106,14 +99,15 @@ read -n 1 -s -r -p "Press [ Enter ] to exit"
 exit 1
 fi
 
-# Parse: LICENSE_KEY|BOUND_IP|EXPIRY|USERNAME|MAX_USER
-LIC_KEY=$(echo "$MATCH_LINE" | cut -d'|' -f1)
-LIC_IP=$(echo "$MATCH_LINE" | cut -d'|' -f2)
-LIC_EXP=$(echo "$MATCH_LINE" | cut -d'|' -f3)
-LIC_USER=$(echo "$MATCH_LINE" | cut -d'|' -f4)
-LIC_MAX=$(echo "$MATCH_LINE" | cut -d'|' -f5)
+# Parse: ### USERNAME EXPIRY IP
+LIC_USER=$(echo "$MATCH_LINE" | awk '{print $2}')
+LIC_EXP=$(echo "$MATCH_LINE" | awk '{print $3}')
 
-# Cek expired
+
+
+
+# Cek expired (skip kalo lifetime)
+if [[ "$LIC_EXP" != "lifetime" ]]; then
 TODAY=$(date +"%Y-%m-%d")
 if [[ "$TODAY" > "$LIC_EXP" ]]; then
 echo -e "${RED}[ERROR]${FONT} License expired on $LIC_EXP ! Please renew."
@@ -122,24 +116,17 @@ echo ""
 read -n 1 -s -r -p "Press [ Enter ] to exit"
 exit 1
 fi
+fi
 
 echo -e "${Green}License Valid!${FONT}"
-echo -e "  User      : ${green}$LIC_USER${FONT}"
-echo -e "  License   : ${green}$LIC_KEY${FONT}"
-echo -e "  Expiry    : ${green}$LIC_EXP${FONT}"
-echo -e "  Max User  : ${green}$LIC_MAX${FONT}"
-if [[ "$FLOATING_MODE" == "true" ]]; then
-echo -e "  Type      : ${YELLOW}Floating (Multi-IP)${FONT}"
-else
-echo -e "  Type      : ${green}IP-Bound${FONT}"
-fi
+echo -e "  User    : ${green}$LIC_USER${FONT}"
+echo -e "  Expiry  : ${green}$LIC_EXP${FONT}"
 echo ""
 sleep 2
 clear
 
 echo "$LIC_USER" > /usr/bin/user
 echo "$LIC_EXP" > /usr/bin/e
-echo "$LIC_MAX" > /usr/bin/max-user
 echo "$MATCH_LINE" > /etc/fts-license.conf
 
 read -p "$( echo -e "Press ${GRAY}[ ${NC}${green}Enter${NC} ${GRAY}]${NC} For Starting Installation") "
@@ -313,7 +300,7 @@ read -p "   Enter Username (12 characters): " nama
 echo "IP=" >> /var/lib/fts/ipvps.conf
 echo $host1 > /etc/xray/domain
 echo $host1 > /root/domain
-echo $nama >> /etc/xray/username
+echo $nama > /etc/xray/username
 echo ""
 elif [[ $host == "2" ]]; then
 wget ${REPO}Fls/cf.sh && chmod +x cf.sh && ./cf.sh

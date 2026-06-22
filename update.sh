@@ -44,6 +44,12 @@ fun_bar() {
 }
 
 res1() {
+    # Backup license data before update
+    USER_SAVE=""; EXP_SAVE=""; MAX_SAVE=""
+    [[ -f /usr/bin/user ]] && USER_SAVE=$(cat /usr/bin/user)
+    [[ -f /usr/bin/e ]] && EXP_SAVE=$(cat /usr/bin/e)
+    [[ -f /usr/bin/max-user ]] && MAX_SAVE=$(cat /usr/bin/max-user)
+
     wget -q -O /root/main.sh "${REPO}main.sh"
     chmod +x /root/main.sh
     
@@ -73,6 +79,11 @@ res1() {
     chmod +x /usr/local/bin/check-license
     echo "*/6 * * * * root /usr/local/bin/check-license" > /etc/cron.d/check-license
     service cron restart
+    
+    # Restore license data
+    [[ -n "$USER_SAVE" ]] && echo "$USER_SAVE" > /usr/bin/user
+    [[ -n "$EXP_SAVE" ]] && echo "$EXP_SAVE" > /usr/bin/e
+    [[ -n "$MAX_SAVE" ]] && echo "$MAX_SAVE" > /usr/bin/max-user
     
     echo "Update completed!"
 }
