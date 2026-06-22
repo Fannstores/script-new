@@ -11,48 +11,47 @@
 
 # Baca lisensi tersimpan
 if [[ ! -f /etc/fts-license.conf ]]; then
-echo "No license file found. Please reinstall."
-exit 1
+    echo "No license file found. Please reinstall."
+    exit 1
 fi
 
-LICENSE_REPO="https://raw.githubusercontent.com/Fannstores/script-new/main/license.txt"
+LICENSE_REPO="https://raw.githubusercontent.com/Fannstores/izin/main/ip"
 IP=$(curl -sS icanhazip.com)
 
-# Download license.txt dari repo
-LICENSE_DATA=$(curl -s "$LICENSE_REPO" 2>/dev/null | grep -v "^#" | grep -v "^$")
+# Download data lisensi dari izin/main/ip
+IZIN_DATA=$(curl -s "$LICENSE_REPO" 2>/dev/null)
 
-if [[ -z "$LICENSE_DATA" ]]; then
-echo "Warning: Cannot fetch license data. Will retry tomorrow."
-exit 0
+if [[ -z "$IZIN_DATA" ]]; then
+    echo "Warning: Cannot fetch license data. Will retry tomorrow."
+    exit 0
 fi
 
 # Cari lisensi berdasarkan IP
-MATCH_LINE=$(echo "$LICENSE_DATA" | grep "|${IP}|" 2>/dev/null | head -1)
-
-# Jika tidak ketemu, cek floating
-if [[ -z "$MATCH_LINE" ]]; then
-MATCH_LINE=$(echo "$LICENSE_DATA" | grep "|0.0.0.0|" 2>/dev/null | head -1)
-fi
+MATCH_LINE=$(echo "$IZIN_DATA" | grep "$IP" 2>/dev/null | head -1)
 
 if [[ -z "$MATCH_LINE" ]]; then
-echo -e "\e[91m[FTS-TUNNEL] LICENSE INVALID! IP $IP not found in license database.\e[0m"
-echo -e "\e[91m[FTS-TUNNEL] All services will continue running for now.\e[0m"
-echo -e "\e[91m[FTS-TUNNEL] Contact Fantunel Store immediately!\e[0m"
-exit 1
+    echo -e "\e[91m[FTS-TUNNEL] LICENSE INVALID! IP $IP not found in license database.\e[0m"
+    echo -e "\e[91m[FTS-TUNNEL] All services will continue running for now.\e[0m"
+    echo -e "\e[91m[FTS-TUNNEL] Contact Fantunel Store immediately!\e[0m"
+    exit 1
 fi
 
-# Parse
-LIC_EXP=$(echo "$MATCH_LINE" | cut -d'|' -f3)
-TODAY=$(date +"%Y-%m-%d")
+# Parse: ### USERNAME EXPIRY IP
+LIC_USER=$(echo "$MATCH_LINE" | awk '{print $2}')
+LIC_EXP=$(echo "$MATCH_LINE" | awk '{print $3}')
 
-# Cek expired
-if [[ "$TODAY" > "$LIC_EXP" ]]; then
-echo -e "\e[91m[FTS-TUNNEL] LICENSE EXPIRED on $LIC_EXP !\e[0m"
-echo -e "\e[91m[FTS-TUNNEL] Contact Fantunel Store for renewal.\e[0m"
-exit 1
+# Cek expired (skip kalo lifetime)
+if [[ "$LIC_EXP" != "lifetime" ]]; then
+    TODAY=$(date +"%Y-%m-%d")
+    if [[ "$TODAY" > "$LIC_EXP" ]]; then
+        echo -e "\e[91m[FTS-TUNNEL] LICENSE EXPIRED on $LIC_EXP !\e[0m"
+        echo -e "\e[91m[FTS-TUNNEL] Contact Fantunel Store for renewal.\e[0m"
+        exit 1
+    fi
 fi
 
 # Simpan ulang (update jika ada perubahan)
 echo "$MATCH_LINE" > /etc/fts-license.conf
+echo "USER=$LIC_USER" >> /etc/fts-license.conf
 echo "[FTS-TUNNEL] License OK. Valid until: $LIC_EXP"
 exit 0
