@@ -1,4 +1,4 @@
-﻿
+
 # FTS-Tunnel — Fantunel Store Tunnel
 **Proprietary Software** — © 2026 Fantunel Store. All Rights Reserved.
 
@@ -96,7 +96,7 @@ Atau gunakan **Bot Telegram License Manager** — tambah/hapus lisensi via chat:
 Sebelum install script, pastikan VPS sudah **root**. Ikuti langkah berikut:
 
 #### Untuk Debian
-`ash
+```bash
 # Login sebagai user default (biasanya debian/admin)
 su -
 
@@ -112,10 +112,10 @@ sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_c
 systemctl restart sshd
 
 # Sekarang bisa login langsung sebagai root
-`
+```
 
 #### Untuk Ubuntu
-`ash
+```bash
 # Login sebagai user default (biasanya ubuntu)
 sudo -i
 
@@ -131,12 +131,12 @@ sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_c
 systemctl restart ssh
 
 # Sekarang bisa login langsung sebagai root
-`
+```
 
 > **Alternatif:** Bisa juga langsung pake script root otomatis:
-> `ash
+```bash
 > wget -q https://raw.githubusercontent.com/Fannstores/script-new/main/root-vps.sh && bash root-vps.sh
-> `
+```
 
 ### Perintah Install (Universal — semua OS):
 
