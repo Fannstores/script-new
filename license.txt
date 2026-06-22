@@ -1,0 +1,22 @@
+# FTS-Tunnel License Database
+# Format: LICENSE_KEY|BOUND_IP|EXPIRY|USERNAME|MAX_USER
+# ============================================
+# Contoh untuk ADMIN (FLOATING / BEBAS IP):
+#   Isi BOUND_IP dengan 0.0.0.0 agar bisa install di VPS mana aja
+# ============================================
+ADMIN-KEY|0.0.0.0|2027-12-31|admin|9999
+#
+# ============================================
+# Contoh untuk USER (IP-BOUND):
+#   Isi BOUND_IP dengan IP VPS user
+# ============================================
+# USER001|103.25.12.34|2027-12-31|pelanggan1|5
+# USER002|203.0.113.50|2027-06-30|pelanggan2|3
+#
+# ============================================
+# CARA NAMBAH / UPDATE LISENSI:
+# Via Bot Telegram: /add IP NAMA EXP_MAXUSER
+#   Contoh: /add 103.25.12.34 pelanggan1 2027-12-31 5
+#
+# Atau edit manual file ini di GitHub lalu commit
+# ============================================
