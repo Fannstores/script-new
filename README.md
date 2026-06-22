@@ -1,4 +1,4 @@
-
+﻿
 # FTS-Tunnel — Fantunel Store Tunnel
 **Proprietary Software** — © 2026 Fantunel Store. All Rights Reserved.
 
@@ -89,6 +89,54 @@ Atau gunakan **Bot Telegram License Manager** — tambah/hapus lisensi via chat:
 - ✅ **KVM** (bukan OpenVZ) — cek dengan `systemd-detect-virt`
 - ✅ **RAM minimal 512MB**
 - ✅ **Root akses**
+
+
+### Root VPS (Wajib Sebelum Install)
+
+Sebelum install script, pastikan VPS sudah **root**. Ikuti langkah berikut:
+
+#### Untuk Debian
+`ash
+# Login sebagai user default (biasanya debian/admin)
+su -
+
+# Set password root
+passwd root
+# Masukkan password root baru (min 6 karakter)
+
+# Enable root SSH login
+sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+sed -i 's/^PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+systemctl restart sshd
+
+# Sekarang bisa login langsung sebagai root
+`
+
+#### Untuk Ubuntu
+`ash
+# Login sebagai user default (biasanya ubuntu)
+sudo -i
+
+# Set password root
+passwd root
+# Masukkan password root baru (min 6 karakter)
+
+# Enable root SSH login
+sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+sed -i 's/^PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+systemctl restart ssh
+
+# Sekarang bisa login langsung sebagai root
+`
+
+> **Alternatif:** Bisa juga langsung pake script root otomatis:
+> `ash
+> wget -q https://raw.githubusercontent.com/Fannstores/script-new/main/root-vps.sh && bash root-vps.sh
+> `
 
 ### Perintah Install (Universal — semua OS):
 
@@ -492,3 +540,4 @@ bash <(curl -s https://raw.githubusercontent.com/Fannstores/script-new/main/bot-
 ---
 
 **© 2026 Fantunel Store. All Rights Reserved.**
+
