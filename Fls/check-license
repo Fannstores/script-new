@@ -1,0 +1,58 @@
+#!/bin/bash
+# ============================================
+# FTS-Tunnel License Checker (Periodic)
+# Author    : Fantunel Store
+# Copyright : © 2026 Fantunel Store. All Rights Reserved.
+# Repo      : github.com/fantunelstore/fts-tunnel
+# ============================================
+# Script ini dijalankan otomatis oleh cron setiap hari
+# untuk memvalidasi lisensi masih aktif.
+# ============================================
+
+# Baca lisensi tersimpan
+if [[ ! -f /etc/fts-license.conf ]]; then
+    echo "No license file found. Please reinstall."
+    exit 1
+fi
+
+LICENSE_REPO="https://raw.githubusercontent.com/Fannstores/izin/main/ip"
+IP=$(curl -sS icanhazip.com)
+
+# Download data lisensi dari izin/main/ip
+IZIN_DATA=$(curl -s "$LICENSE_REPO" 2>/dev/null)
+
+if [[ -z "$IZIN_DATA" ]]; then
+    echo "Warning: Cannot fetch license data. Will retry tomorrow."
+    exit 0
+fi
+
+# Cari lisensi berdasarkan IP
+MATCH_LINE=$(echo "$IZIN_DATA" | grep -w "$IP" 2>/dev/null | head -1)
+
+if [[ -z "$MATCH_LINE" ]]; then
+    echo -e "\e[91m[FTS-TUNNEL] LICENSE INVALID! IP $IP not found in license database.\e[0m"
+    echo -e "\e[91m[FTS-TUNNEL] All services will continue running for now.\e[0m"
+    echo -e "\e[91m[FTS-TUNNEL] Contact Fantunel Store immediately!\e[0m"
+    exit 1
+fi
+
+# Parse: ### USERNAME EXPIRY IP
+LIC_USER=$(echo "$MATCH_LINE" | awk '{print $2}')
+LIC_EXP=$(echo "$MATCH_LINE" | awk '{print $3}')
+
+# Cek expired (skip kalo lifetime)
+if [[ "$LIC_EXP" != "lifetime" ]]; then
+    TODAY=$(date +"%Y-%m-%d")
+    LIC_EXP_NORM=$(date -d "$LIC_EXP" +"%Y-%m-%d" 2>/dev/null || echo "$LIC_EXP")
+    if [[ "$TODAY" > "$LIC_EXP_NORM" ]]; then
+        echo -e "\e[91m[FTS-TUNNEL] LICENSE EXPIRED on $LIC_EXP !\e[0m"
+        echo -e "\e[91m[FTS-TUNNEL] Contact Fantunel Store for renewal.\e[0m"
+        exit 1
+    fi
+fi
+
+# Simpan ulang (update jika ada perubahan)
+echo "$MATCH_LINE" > /etc/fts-license.conf
+echo "USER=$LIC_USER" >> /etc/fts-license.conf
+echo "[FTS-TUNNEL] License OK. Valid until: $LIC_EXP"
+exit 0
