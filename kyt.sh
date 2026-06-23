@@ -17,7 +17,7 @@ cd /usr/bin
 rm -rf kyt
 rm -rf bot
 apt update && apt upgrade
-apt install python3 python3-pip git
+apt install -y python3 python3-pip git
 cd /usr/bin
 wget https://raw.githubusercontent.com/Fannstores/script-new/main/Bot/bot.zip
 unzip bot.zip
@@ -43,12 +43,12 @@ echo -e "${grenbo}[*] Get Telegram ID : @MissRose_bot, command /info${NC}"
 echo -e "\e[96m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[0m"
 read -e -p "[*] Input your Bot Token : " bottoken
 read -e -p "[*] Input Your Telegram ID :" admin
-echo -e BOT_TOKEN='"'"$bottoken"'"' >> /usr/bin/kyt/var.txt
-echo -e ADMIN='"'"$admin"'"' >> /usr/bin/kyt/var.txt
-echo -e DOMAIN='"'"$domain"'"' >> /usr/bin/kyt/var.txt
-echo -e PUB='"'"$PUB"'"' >> /usr/bin/kyt/var.txt
-echo -e HOST='"'"$NS"'"' >> /usr/bin/kyt/var.txt
-rm /etc/bot/.bot.db
+echo -e BOT_TOKEN='"'$bottoken'"' >> /usr/bin/kyt/var.txt
+echo -e ADMIN='"'$admin'"' >> /usr/bin/kyt/var.txt
+echo -e DOMAIN='"'$domain'"' >> /usr/bin/kyt/var.txt
+echo -e PUB='"'$PUB'"' >> /usr/bin/kyt/var.txt
+echo -e HOST='"'$NS'"' >> /usr/bin/kyt/var.txt
+rm -f /etc/bot/.bot.db
 echo "#bot# ${bottoken} ${admin}" >>/etc/bot/.bot.db
 clear
 

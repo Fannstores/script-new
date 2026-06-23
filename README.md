@@ -54,26 +54,29 @@
 
 ---
 
-## 2. CONTOH LISENSI
+## 2. FORMAT IZIN (/etc/fts/izin.db / Repo Fannstores/izin)
 
-### Untuk Admin (Bebas IP / Floating)
-```bash
-ADMIN-KEY|0.0.0.0|2027-12-31|admin|9999
-```
-> `0.0.0.0` = Bisa install di VPS mana saja
+Database lisensi ada di repo terpisah: **[Fannstores/izin](https://github.com/Fannstores/izin)** (bukan di script-new!).
 
-### Untuk User (Terikat IP)
+### Format File `ip`
 ```bash
-FTS-USER001|103.25.12.34|2027-12-31|pelanggan1|5
+### Fauzi lifetime 159.223.48.123
+### user1 2027-12-31 103.25.12.34
 ```
-> Ganti `103.25.12.34` dengan IP VPS user. `5` = max 5 akun VPN
+Aturan:
+- Baris diawali `###` (3 hash) — diparse awk `{print $2, $3, $4}`
+- **Username**: lowercase, tanpa spasi
+- **Expiry**: `lifetime` (lowercase) atau `YYYY-MM-DD` (wajib 2 digit: `2025-05-05`, bukan `2025-5-5`)
+- **IP**: IP VPS user
+
+### Contoh Admin (Floating / Bebas IP)
+```bash
+### admin lifetime 0.0.0.0
+```
 
 ### Cara Nambah Lisensi
-1. Buka `license.txt` di repo GitHub
-2. Tambah baris baru:
-   ```
-   FTS-NAMA|IP_VPS_USER|TGL_EXPIRED|USERNAME|MAX_USER
-   ```
+1. Edit `ip` di repo **Fannstores/izin** (bukan script-new!)
+2. Tambah baris baru sesuai format di atas
 3. Commit & push
 
 Atau gunakan **Bot Telegram License Manager** — tambah/hapus lisensi via chat:
@@ -445,53 +448,67 @@ chmod +x uninstall.sh
 
 ---
 
-## 8. STRUKTUR REPO
+## 8. STRUKTUR REPO & CARA UPLOAD KE GITHUB
+
+### Repo 1: `Fannstores/script-new` (root = isi folder `script-new/`)
+
+File utama script ada di repo ini. Upload semua file ke root repo.
+
 ```
-Fannstores/script-new/
-├── main.sh              # Installer utama
-├── update.sh            # Updater
-├── license.txt          # Database lisensi
-├── filelist.txt         # Manifest update
-├── fts-licgen.sh        # License generator (admin)
-├── README.md            # Dokumentasi ini
-│
-├── Cfg/                 # Konfigurasi
-│   ├── config.json      # Xray config
-│   ├── haproxy.cfg      # HAProxy config
-│   ├── xray.conf        # Nginx Xray config
-│   ├── nginx.conf       # Nginx main config
-│   ├── dropbear.conf    # Dropbear config
-│   ├── tun.conf         # WebSocket tunnel config
-│   ├── rclone.conf      # Backup config
-│   └── m-noobz          # Noobzvpns binary
-│
-├── Fls/                 # Service & binary files
-│   ├── sshd             # SSHD config
-│   ├── password         # PAM password config
-│   ├── ws / ws.service  # WebSocket proxy
-│   ├── udp-mini*        # UDP Mini
-│   ├── runn.service     # Xray runner
-│   ├── openvpn          # OpenVPN installer
-│   ├── bbr.sh           # BBR installer
-│   ├── cf.sh            # Cloudflare (ISI API KEY!)
-│   ├── ftvpn            # FTVPN binary
-│   ├── limit.sh         # Limit installer
-│   ├── limit-ip         # IP limit binary
-│   ├── nameserver       # SlowDNS
-│   ├── check-license    # License checker cron
-│   └── ...              # File limit services
-│
-├── Enc/encrypt          # Binary encrypt file
-├── Bnr/                 # Banner files
-├── Bot/                 # Bot Telegram files
-├── Cdy/menu.zip         # Menu encrypted
-├── Vpn/openvpn          # OpenVPN config
-│
-├── bot-license-manager/ # 🤖 Bot Telegram License Manager
-│   ├── bot.py           # Main bot script
-│   ├── README.md        # Panduan install bot
-│   ├── install.sh       # One-liner installer
-│   └── config.py.example
+📄 main.sh                 # Installer utama
+📄 update.sh               # Updater (baca filelist.txt)
+📄 kyt.sh                  # Installer Bot Telegram
+📄 root-vps.sh             # Root VPS helper
+📄 fts-licgen.sh           # License generator (admin)
+📄 filelist.txt            # Manifest update (daftar file + versi)
+📄 README.md               # Dokumentasi ini
+📄 AUDIT-REPORT.md         # Laporan audit bug
+📁 Cfg/                    # Konfigurasi (config.json, haproxy.cfg, nginx.conf, dll)
+📁 Fls/                    # Service files & binary (check-license, ws.py, vmess, dll)
+📁 Cdy/menu.zip            # Menu encrypted
+📁 Bnr/                    # Banner SSH
+📁 Bot/                    # Bot binary
+📁 Enc/                    # Encrypt binary
+📁 Vpn/                    # OpenVPN
+📁 bot-license-manager/    # Bot Telegram License Manager (subfolder)
+```
+
+### Repo 2: `Fannstores/izin` (TERPISAH — bukan di script-new!)
+
+```
+📄 README.md
+📄 ip       # Database lisensi (format: ### USERNAME EXPIRY IP)
+📄 admin    # Database admin yang berhak regis
+```
+
+⚠️ **PENTING**: `main.sh` & `check-license` ambil data dari repo **Fannstores/izin**:
+```bash
+IZIN_REPO="https://raw.githubusercontent.com/Fannstores/izin/main/ip"
+LICENSE_REPO="https://raw.githubusercontent.com/Fannstores/izin/main/ip"
+```
+
+### Cara Git Upload
+
+```bash
+# Clone repo
+git clone https://github.com/Fannstores/script-new.git
+git clone https://github.com/Fannstores/izin.git
+
+# Copy file fix ke repo
+xcopy /E /Y "sourcode vps2\script-new\*" "script-new\"
+xcopy /Y "sourcode vps2\izin\*" "izin\"
+
+# Commit & push script-new
+cd script-new
+git add .
+git commit -m "v2.0: Bug fix + branding cleanup + update.sh full"
+git push
+
+# Commit & push izin
+cd ..\izin
+git add .
+git commit -m "Fix format tanggal + lowercase lifetime"
+git push
 ```
 
 ---
@@ -536,6 +553,24 @@ bash <(curl -s https://raw.githubusercontent.com/Fannstores/script-new/main/bot-
 ✅ Cek disk space: df -h
 ✅ Cek apakah update.sh terdownload: ls -la update.sh
 ```
+
+---
+
+## 9. CHANGELOG
+
+### 2026-06-23 — Bug Fix & Branding Update
+- ✅ Fix: `apt upgrade` sebelum `apt update` (error di VPS fresh)
+- ✅ Fix: `grep "$IP"` tanpa `-w` (match substring)
+- ✅ Fix: Date comparison gagal format non-padded (`2025-5-5`)
+- ✅ Fix: `echo "IP="` tanpa nilai IP
+- ✅ Fix: `$NET` undefined di vnstat (deteksi interface otomatis)
+- ✅ Fix: HAProxy repo hardcode `bookworm` (dynamic codename)
+- ✅ Fix: `pip` → `pip3` (Ubuntu 24+ support)
+- ✅ Fix: `apt install` tanpa `-y` di kyt.sh
+- ✅ Fix: Root elevation `sudo -i << 'EOF'` gak bekerja
+- ✅ Fix: Dangling `netfilter-persistent` di update.sh
+- ✅ Branding: Semua backend source pindah ke repo Fantunel Store
+- ✅ Documentation: README, AUDIT-REPORT, filelist diupdate
 
 ---
 

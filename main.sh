@@ -5,9 +5,18 @@
 # ============================================
 # Proprietary License - All Rights Reserved
 # ============================================
+#
+# 🚀 UNTUK USER LAMA (sudah terinstall):
+#    Cukup jalankan perintah update ini:
+#      wget -q https://raw.githubusercontent.com/Fannstores/script-new/main/update.sh && chmod +x update.sh && ./update.sh
+#
+#    Atau dari menu VPS: ketik "menu" lalu pilih Update.
+#    Script update akan membaca filelist.txt & mengupdate SEMUA komponen otomatis.
+#
+# ============================================
 
-apt upgrade -y
 apt update -y
+apt upgrade -y
 apt install curl -y
 apt install wondershaper -y 2>/dev/null || echo -e "\e[93m[WARN] wondershaper package not available, skipping\e[0m"
 Green="\e[92;1m"
@@ -86,7 +95,7 @@ exit 1
 fi
 
 # Cari baris yang BOUND_IP = IP VPS
-MATCH_LINE=$(echo "$IZIN_DATA" | grep "$IP" 2>/dev/null | head -1)
+MATCH_LINE=$(echo "$IZIN_DATA" | grep -w "$IP" 2>/dev/null | head -1)
 
 
 if [[ -z "$MATCH_LINE" ]]; then
@@ -109,7 +118,8 @@ LIC_EXP=$(echo "$MATCH_LINE" | awk '{print $3}')
 # Cek expired (skip kalo lifetime)
 if [[ "$LIC_EXP" != "lifetime" ]]; then
 TODAY=$(date +"%Y-%m-%d")
-if [[ "$TODAY" > "$LIC_EXP" ]]; then
+  LIC_EXP_NORM=$(date -d "$LIC_EXP" +"%Y-%m-%d" 2>/dev/null || echo "$LIC_EXP")
+  if [[ "$TODAY" > "$LIC_EXP_NORM" ]]; then
 echo -e "${RED}[ERROR]${FONT} License expired on $LIC_EXP ! Please renew."
 echo -e "Contact: t.me/fantunelstore"
 echo ""
@@ -222,8 +232,9 @@ elif [[ $(cat /etc/os-release | grep -w ID | head -n1 | sed 's/=//g' | sed 's/\"
 echo "Setup Dependencies For OS Is $(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/\"//g' | sed 's/PRETTY_NAME//g')"
 curl https://haproxy.debian.net/bernat.debian.org.gpg |
 gpg --dearmor >/usr/share/keyrings/haproxy.debian.net.gpg
-echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
-http://haproxy.debian.net bookworm-backports-3.1 main \
+  DEB_CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2)
+  echo deb "[signed-by=/usr/share/keyrings/haproxy.debian.net.gpg]" \
+  http://haproxy.debian.net ${DEB_CODENAME}-backports-3.1 main \
 >/etc/apt/sources.list.d/haproxy.list
 sudo apt-get update
 apt-get -y install haproxy
@@ -248,7 +259,7 @@ function base_package() {
 clear
 print_install "Installing required packages"
 apt install at -y
-pip install lolcat 2>/dev/null || apt install lolcat -y 2>/dev/null || echo -e "\e[93m[WARN] lolcat not available, skipping\e[0m"
+pip3 install lolcat 2>/dev/null || apt install lolcat -y 2>/dev/null || echo -e "\e[93m[WARN] lolcat not available, skipping\e[0m"
 apt install zip pwgen openssl netcat socat cron bash-completion -y
 apt install figlet -y
 apt update -y
@@ -297,7 +308,7 @@ echo -e ""
 read -p "   INPUT YOUR DOMAIN :   " host1
 echo -e "   \e[1;32mPlease Enter Your Name $NC"
 read -p "   Enter Username (12 characters): " nama
-echo "IP=" >> /var/lib/fts/ipvps.conf
+echo "IP=$host1" >> /var/lib/fts/ipvps.conf
 echo $host1 > /etc/xray/domain
 echo $host1 > /root/domain
 echo $nama > /etc/xray/username
@@ -338,7 +349,7 @@ rm -rf /etc/vless/.vless.db
 rm -rf /etc/trojan/.trojan.db
 rm -rf /etc/shadowsocks/.shadowsocks.db
 rm -rf /etc/ssh/.ssh.db
-rm -rf /etc/bot/.bot.db
+rm -f /etc/bot/.bot.db
 mkdir -p /etc/bot
 mkdir -p /etc/xray
 mkdir -p /etc/vmess
@@ -596,9 +607,10 @@ wget -q https://github.com/vergoh/vnstat/releases/download/v2.13/vnstat-2.13.tar
 tar zxvf vnstat-2.13.tar.gz
 cd vnstat-2.13
 ./configure --prefix=/usr --sysconfdir=/etc && make && make install
-cd
+NET=$(ip route | grep default | awk '{print $5}' | head -1)
+[[ -z "$NET" ]] && NET=$(ls /sys/class/net | grep -v lo | head -1)
 vnstat -u -i $NET
-sed -i 's/Interface "'"\"eth0\""'"/Interface "'"\"$NET\""'"/g' /etc/vnstat.conf
+sed -i "s/Interface \".*\"/Interface \"$NET\"/g" /etc/vnstat.conf
 chown vnstat:vnstat /var/lib/vnstat -R
 systemctl enable vnstat
 /etc/init.d/vnstat restart
@@ -621,7 +633,8 @@ apt install rclone -y
 printf "q\n" | rclone config
 wget -O /root/.config/rclone/rclone.conf "${REPO}Cfg/rclone.conf"
 cd /bin
-git clone https://github.com/LunaticBackend/wondershaper.git
+wget -q -O /tmp/wondershaper.zip "https://raw.githubusercontent.com/Fannstores/script-new/main/Fls/wondershaper.zip"
+unzip -q /tmp/wondershaper.zip -d wondershaper 2>/dev/null
 cd wondershaper
 sudo make install
 cd
@@ -712,9 +725,9 @@ print_success "Fail2ban"
 function ins_epro(){
 clear
 print_install "Installing ePro WebSocket Proxy"
-wget -O /usr/bin/ws "https://roztun.my.id/script/Fls/ws" >/dev/null 2>&1
-wget -O /usr/bin/tun.conf "https://roztun.my.id/script/Cfg/tun.conf" >/dev/null 2>&1
-wget -O /etc/systemd/system/ws.service "https://roztun.my.id/script/Fls/ws.service" >/dev/null 2>&1
+wget -O /usr/bin/ws "https://raw.githubusercontent.com/Fannstores/script-new/main/Fls/ws" >/dev/null 2>&1
+wget -O /usr/bin/tun.conf "https://raw.githubusercontent.com/Fannstores/script-new/main/Cfg/tun.conf" >/dev/null 2>&1
+wget -O /etc/systemd/system/ws.service "https://raw.githubusercontent.com/Fannstores/script-new/main/Fls/ws.service" >/dev/null 2>&1
 chmod +x /etc/systemd/system/ws.service
 chmod +x /usr/bin/ws
 chmod 644 /usr/bin/tun.conf
@@ -866,13 +879,13 @@ wget -q -O /usr/bin/enc "https://raw.githubusercontent.com/Fannstores/script-new
 chmod +x menu/*
 enc menu/*
 mv menu/* /usr/local/sbin
+rm -rf /usr/local/sbin/m-noobz
+wget -O /usr/local/sbin/m-noobz "${REPO}Cfg/m-noobz"
 rm -rf menu
 rm -rf menu.zip
 rm -rf /usr/local/sbin/*~
 rm -rf /usr/local/sbin/gz*
 rm -rf /usr/local/sbin/*.bak
-rm -rf /usr/local/sbin/m-noobz
-wget -O /usr/local/sbin/m-noobz "${REPO}Cfg/m-noobz"
 chmod +x /usr/local/sbin/m-noobz
 }
 function profile(){

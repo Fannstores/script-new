@@ -27,18 +27,9 @@ echo ""
 if [ "$(id -u)" -eq 0 ]; then
     echo -e "${Green}[✓] Already running as root${NC}"
 else
-    echo -e "${YELLOW}[!] Not root, trying to elevate...${NC}"
-    # Coba elevate
-    sudo -i << 'EOF'
-    echo "Root elevation successful"
-EOF
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}[✗] Cannot elevate to root!${NC}"
-        echo -e "${YELLOW}Please run this script as root manually:${NC}"
-        echo "  sudo -i"
-        echo "  bash root-vps.sh"
-        exit 1
-    fi
+    echo -e "${RED}[✗] Must run as root!${NC}"
+    echo -e "${YELLOW}Please run: sudo bash root-vps.sh${NC}"
+    exit 1
 fi
 
 # Set root password

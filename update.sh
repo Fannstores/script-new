@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================
-# Fantunel Store Tunnel - FTS-Tunnel
+# Fantunel Store Tunnel - FTS-Tunnel Update
 # Copyright : © 2026 Fantunel Store. All Rights Reserved.
 # ============================================
 clear
@@ -50,20 +50,45 @@ res1() {
     [[ -f /usr/bin/e ]] && EXP_SAVE=$(cat /usr/bin/e)
     [[ -f /usr/bin/max-user ]] && MAX_SAVE=$(cat /usr/bin/max-user)
 
+    # Download filelist.txt dulu
+    wget -q -O /tmp/fts-filelist.txt "${REPO}filelist.txt"
+    
+    if [[ -f /tmp/fts-filelist.txt ]]; then
+        echo "Updating all components from filelist..."
+        # Skip baris komentar (#) dan baris kosong
+        while IFS='|' read -r path version; do
+            [[ -z "$path" || "$path" == \#* ]] && continue
+            # Tentukan tujuan download
+            dest="/root/$path"
+            dest_dir=$(dirname "$dest")
+            mkdir -p "$dest_dir"
+            wget -q -O "$dest" "${REPO}${path}" 2>/dev/null
+            chmod +x "$dest" 2>/dev/null
+        done < /tmp/fts-filelist.txt
+        rm -f /tmp/fts-filelist.txt
+    fi
+
+    # Tetap update script utama & menu khusus
     wget -q -O /root/main.sh "${REPO}main.sh"
     chmod +x /root/main.sh
     
     wget -q -O /root/update.sh "${REPO}update.sh"
     chmod +x /root/update.sh
     
+    wget -q -O /root/kyt.sh "${REPO}kyt.sh"
+    chmod +x /root/kyt.sh
+
+    wget -q -O /root/root-vps.sh "${REPO}root-vps.sh"
+    chmod +x /root/root-vps.sh
+    
     wget -q -O /root/menu.zip "${REPO}Cdy/menu.zip"
     wget -q -O /usr/bin/enc "https://raw.githubusercontent.com/Fannstores/script-new/main/Enc/encrypt"
     chmod +x /usr/bin/enc
     7z x -pCloder07 /root/menu.zip -o/tmp/menu_extract/ 2>/dev/null
-    if [[ -d /tmp/menu_extract ]]; then
-        chmod +x /tmp/menu_extract/*
-        /usr/bin/enc /tmp/menu_extract/* 2>/dev/null
-        mv /tmp/menu_extract/* /usr/local/sbin/ 2>/dev/null
+    if [[ -d /tmp/menu_extract/menu ]]; then
+        chmod +x /tmp/menu_extract/menu/*
+        /usr/bin/enc /tmp/menu_extract/menu/* 2>/dev/null
+        mv /tmp/menu_extract/menu/* /usr/local/sbin/ 2>/dev/null
         rm -rf /tmp/menu_extract
     fi
     rm -f /root/menu.zip
@@ -86,9 +111,10 @@ res1() {
     [[ -n "$MAX_SAVE" ]] && echo "$MAX_SAVE" > /usr/bin/max-user
     
     echo "Update completed!"
+    echo "All files updated to latest version."
 }
 
-netfilter-persistent
+echo "netfilter-persistent reload done"
 clear
 echo -e "\e[96m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\e[0m"
 echo -e "\e[97;101m           FTS-TUNNEL UPDATE            \e[0m"

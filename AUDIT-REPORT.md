@@ -117,7 +117,7 @@
 | Credit footer | ✅ Fantunel Store |
 | Token bot | ✅ `8553989553:AAG2ag7gtLByORny5br3Nmdzf0lLC07678Y` |
 | Chat ID | ✅ `6260838668` |
-| Hapus watermark lama | ✅ Lunatic/Skayzu sudah diganti |
+| Backend sources | ✅ Semua sumber backend di-replace dengan repo Fantunel Store sendiri |
 
 ---
 
