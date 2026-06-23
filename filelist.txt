@@ -1,0 +1,63 @@
+# FTS-Tunnel Filelist Update Manifest
+# Copyright: © 2026 Fantunel Store
+# Repo: github.com/Fannstores/script-new
+# Format: relative_path|version
+# Version: 20260623
+#
+main.sh|20260623
+update.sh|20260623
+kyt.sh|20260623
+root-vps.sh|20260623
+fts-licgen.sh|20260623
+README.md|20260623
+AUDIT-REPORT.md|20260623
+Cfg/config.json|20260623
+Cfg/haproxy.cfg|20260623
+Cfg/xray.conf|20260623
+Cfg/nginx.conf|20260623
+Cfg/dropbear.conf|20260623
+Cfg/tun.conf|20260623
+Cfg/m-noobz|20260623
+Cfg/rclone.conf|20260623
+Cfg/Loadbalance.cfg|20260623
+Fls/sshd|20260623
+Fls/password|20260623
+Fls/ws|20260623
+Fls/ws.service|20260623
+Fls/udp-mini|20260623
+Fls/udp-mini-1.service|20260623
+Fls/udp-mini-2.service|20260623
+Fls/udp-mini-3.service|20260623
+Fls/runn.service|20260623
+Fls/openvpn|20260623
+Fls/bbr.sh|20260623
+Fls/cf.sh|20260623
+Fls/ftvpn|20260623
+Fls/limit.sh|20260623
+Fls/limit-ip|20260623
+Fls/nameserver|20260623
+Fls/quota|20260623
+Fls/vmess|20260623
+Fls/vless|20260623
+Fls/trojan|20260623
+Fls/shadowsocks|20260623
+Fls/socks.service|20260623
+Fls/limitvmess.service|20260623
+Fls/limitvless.service|20260623
+Fls/limittrojan.service|20260623
+Fls/limitshadowsocks.service|20260623
+Fls/limit-ip-ssh|20260623
+Fls/ipserver|20260623
+Fls/rc|20260623
+Fls/asem|20260623
+Fls/gotop|20260623
+Fls/check-license|20260623
+Fls/backup-member.sh|20260623
+Fls/restore-member.sh|20260623
+Fls/setup-backup.sh|20260623
+Enc/encrypt|20260623
+Bnr/issue.net|20260623
+Bnr/banner.txt|20260623
+Bot/bot.zip|20260623
+Bot/kyt.zip|20260623
+Vpn/openvpn|20260623
